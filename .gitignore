@@ -1,0 +1,28 @@
+# Developer
+.DS_Store
+.vscode
+.env
+.env.implementation
+# Hardhat
+cache/
+artifacts/
+cache_hardhat/
+typechain-types/
+test/abis/backup
+
+# Foundry
+out/
+!out/Badges.sol/Badges.json
+!out/Raft.sol/Raft.json
+!out/SpecDataHolder.sol/SpecDataHolder.json
+
+# Project
+node_modules
+upload
+deploy
+verify
+
+# OpenZeppelin
+.openzeppelin/dev-*.json
+.openzeppelin/.session
+.openzeppelin/unknown-*.json
