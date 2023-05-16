@@ -12,6 +12,8 @@ from rich.markdown import Markdown
 import os
 import sys
 import argparse
+from .prompts import mentor_prompt, architect_prompt
+
 
 load_dotenv()
 api_key = os.environ['OPENAI_API_KEY']
@@ -19,8 +21,8 @@ app = Flask(__name__)
 console = Console()
 
 def write_with_code_block(text):
-    start_code_block = '\033[1;37;40m'  # White text with black background
-    end_code_block = '\033[0m'  # Reset to default colors
+    start_code_block = '\033[1;37;40m'
+    end_code_block = '\033[0m'
     sys.stdout.write(start_code_block + text + end_code_block)
     sys.stdout.flush()
 
@@ -39,19 +41,10 @@ class CustomChatOpenAI(ChatOpenAI):
         return result
     
     
-def call_gpt(code):
-    print(code)
+def call_gpt(code, prompt):
+    print(prompt)
     chat = CustomChatOpenAI(streaming=True, model_name="gpt-3.5-turbo", callback_manager=BaseCallbackManager([StreamingStdOutCallbackHandler()]), verbose=True)
-    chat([HumanMessage(content=f"""The following code may have a bug. If it exists, tell me exactly where to look. In your response only tell me concisely exactly where to look. Be as concise as possible. Respond like, You may want to look at _____ where there's an issue with ____ and you can fix it by _____. Be specific with your suggested fix. Show a minimal representation of the fixed code.
-                                              
-    If there is no obvious bug simply reply, "no bug".
-    
-    Next you'll play the role of a software architect. You'll take a second look at our architecture decisions and recommend alternatives if there's something better.
-    
-    If there is no obvious recommendation, simply reply, "no rec"
-    
-    Below I will paste the contents from a bunch of my files. If I show you errors pay special attention to the errors and help me fix them.
-{code}""")])
+    chat([HumanMessage(content=prompt)])
 
 
 def get_file_content(file_names):
@@ -66,13 +59,18 @@ def get_file_content(file_names):
 def main(args=None):
     print('app started')
     parser = argparse.ArgumentParser(description='Process some files.')
+    parser.add_argument('mode', metavar='M', type=str, choices=['mentor', 'architect'],
+                        help='Mode of operation: mentor or architect')
     parser.add_argument('file_names', metavar='N', type=str, nargs='+',
                         help='Files to process')
 
     args = parser.parse_args(args)
     while True:
         file_content = get_file_content(args.file_names)
-        call_gpt(file_content)
+        if args.mode == 'mentor':
+            call_gpt(file_content, mentor_prompt(file_content))
+        elif args.mode == 'architect':
+            call_gpt(file_content, architect_prompt(file_content))
         input("Press Enter to continue...")
 
 
